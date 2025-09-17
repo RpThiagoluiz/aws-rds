@@ -55,6 +55,8 @@ jobs:
 
           # Tentar importar RDS instance se já existe
           terraform import aws_db_instance.postgres fiap-customer-db || true
+        env:
+          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
 
       - name: Terraform Plan
         working-directory: infra
