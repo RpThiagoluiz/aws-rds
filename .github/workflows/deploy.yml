@@ -46,14 +46,9 @@ jobs:
         working-directory: infra
         run: terraform init
 
-      - name: Create psycopg2 layer
+      - name: Terraform Init
         working-directory: infra
-        run: |
-          # Criar layer com psycopg2 para Lambda
-          mkdir -p python/lib/python3.9/site-packages
-          pip install psycopg2-binary -t python/lib/python3.9/site-packages/
-          zip -r psycopg2-layer.zip python/
-          rm -rf python/
+        run: terraform init
 
       - name: Import existing resources (if any)
         working-directory: infra
@@ -87,30 +82,25 @@ jobs:
           echo "endpoint=$(terraform output -raw rds_endpoint)" >> $GITHUB_OUTPUT
           echo "database_name=$(terraform output -raw database_name)" >> $GITHUB_OUTPUT
 
-      # Seeds via Lambda (seguro para RDS privado)
-      - name: Run SQL seeds via Lambda
+      # Seeds SQL diretos (compatível com AWS Academy)
+      - name: Run SQL seeds
+        working-directory: seeds
         run: |
-          echo "🌱 Executando seeds via Lambda..."
+          # Instalar PostgreSQL client
+          sudo apt-get update && sudo apt-get install -y postgresql-client
 
-          # Invocar Lambda que executa seeds dentro da VPC
-          response=$(aws lambda invoke \
-            --function-name rds-seeds-function \
-            --payload '{}' \
-            --output text \
-            response.json)
+          # Aguardar RDS estar disponível
+          echo "🕐 Aguardando RDS estar disponível..."
+          sleep 180
 
-          echo "Response: $response"
-          cat response.json
-
-          # Verificar se foi bem-sucedido
-          if [ "$response" = "200" ]; then
-            echo "✅ Seeds executados com sucesso via Lambda!"
-          else
-            echo "❌ Erro ao executar seeds via Lambda"
-            exit 1
-          fi
+          # Executar seeds
+          ./run-seeds.sh
         env:
           AWS_ROLE_ARN: ${{ secrets.FIAP_POS_AWS_ROLE_ARN }}
+          DB_HOST: ${{ steps.rds_output.outputs.endpoint }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: ${{ steps.rds_output.outputs.database_name }}
 
       - name: Done
         run: echo "Deploy e seed finalizados."

@@ -68,12 +68,12 @@ resource "aws_security_group" "rds_sg" {
   name_prefix = "rds-postgres-sg-"
   vpc_id      = aws_default_vpc.default.id
 
-  # Permitir acesso apenas da Lambda (mais seguro)
+  # Permitir acesso externo para AWS Academy
   ingress {
-    from_port       = 5432
-    to_port         = 5432
-    protocol        = "tcp"
-    security_groups = [aws_security_group.lambda_sg.id]
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
@@ -119,8 +119,8 @@ resource "aws_db_instance" "postgres" {
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
   db_subnet_group_name   = aws_db_subnet_group.postgres_subnet_group.name
   
-  # Manter privado por segurança
-  publicly_accessible = false
+  # Tornar público para AWS Academy (sem IAM complexo)
+  publicly_accessible = true
   
   backup_retention_period = 7
   backup_window          = "03:00-04:00"
