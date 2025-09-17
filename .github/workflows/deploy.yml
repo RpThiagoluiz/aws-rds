@@ -49,6 +49,8 @@ jobs:
       - name: Terraform Plan
         working-directory: infra
         run: terraform plan
+        env:
+          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
 
       - name: Terraform Apply
         working-directory: infra
