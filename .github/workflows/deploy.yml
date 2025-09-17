@@ -82,17 +82,17 @@ jobs:
       - name: Run SQL seeds via Lambda
         run: |
           echo "🌱 Executando seeds via Lambda..."
-          
+
           # Invocar Lambda que executa seeds dentro da VPC
           response=$(aws lambda invoke \
             --function-name rds-seeds-function \
             --payload '{}' \
             --output text \
             response.json)
-          
+
           echo "Response: $response"
           cat response.json
-          
+
           # Verificar se foi bem-sucedido
           if [ "$response" = "200" ]; then
             echo "✅ Seeds executados com sucesso via Lambda!"
