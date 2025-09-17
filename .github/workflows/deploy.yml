@@ -78,26 +78,30 @@ jobs:
           echo "endpoint=$(terraform output -raw rds_endpoint)" >> $GITHUB_OUTPUT
           echo "database_name=$(terraform output -raw database_name)" >> $GITHUB_OUTPUT
 
-      # Seeds SQL (ajuste conforme sua estratégia)
-      - name: Run SQL seeds
-        if: success()
-        working-directory: seeds
+      # Seeds via Lambda (seguro para RDS privado)
+      - name: Run SQL seeds via Lambda
         run: |
-          # Instalar PostgreSQL client
-          sudo apt-get update && sudo apt-get install -y postgresql-client
-
-          # Aguardar RDS estar disponível (após modificações pode demorar mais)
-          echo "🕐 Aguardando RDS estar disponível..."
-          sleep 180
-
-          # Executar seeds
-          ./run-seeds.sh
+          echo "🌱 Executando seeds via Lambda..."
+          
+          # Invocar Lambda que executa seeds dentro da VPC
+          response=$(aws lambda invoke \
+            --function-name rds-seeds-function \
+            --payload '{}' \
+            --output text \
+            response.json)
+          
+          echo "Response: $response"
+          cat response.json
+          
+          # Verificar se foi bem-sucedido
+          if [ "$response" = "200" ]; then
+            echo "✅ Seeds executados com sucesso via Lambda!"
+          else
+            echo "❌ Erro ao executar seeds via Lambda"
+            exit 1
+          fi
         env:
           AWS_ROLE_ARN: ${{ secrets.FIAP_POS_AWS_ROLE_ARN }}
-          DB_HOST: ${{ steps.rds_output.outputs.endpoint }}
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_NAME: ${{ steps.rds_output.outputs.database_name }}
 
       - name: Done
         run: echo "Deploy e seed finalizados."
