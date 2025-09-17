@@ -32,8 +32,12 @@ fi
 # Executar seed de customers
 echo -e "${YELLOW}🏃 Executando seed customers.sql...${NC}"
 
+# Remover porta do host se estiver presente (ex: host:5432 -> host)
+DB_HOST_CLEAN=$(echo $DB_HOST | cut -d':' -f1)
+
 PGPASSWORD=$DB_PASSWORD psql \
-    -h $DB_HOST \
+    -h $DB_HOST_CLEAN \
+    -p 5432 \
     -U $DB_USER \
     -d $DB_NAME \
     -f customers.sql
@@ -49,7 +53,8 @@ fi
 echo -e "${YELLOW}🔍 Verificando dados inseridos...${NC}"
 
 PGPASSWORD=$DB_PASSWORD psql \
-    -h $DB_HOST \
+    -h $DB_HOST_CLEAN \
+    -p 5432 \
     -U $DB_USER \
     -d $DB_NAME \
     -c "SELECT COUNT(*) as total_customers FROM customers;"
