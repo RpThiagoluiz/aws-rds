@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -16,7 +17,8 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: '18'
+          cache: 'npm'
 
       - name: Set up Python (for AWS CLI/Terraform)
         uses: actions/setup-python@v5
@@ -27,12 +29,13 @@ jobs:
         run: |
           pip install awscli
 
-      - name: Configure AWS credentials
+      - name: Set up AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          aws-access-key-id: ${{ secrets.FIAP_POS_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.FIAP_POS_AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.FIAP_POS_AWS_SESSION_TOKEN }}
+          aws-region: ${{ secrets.FIAP_POS_AWS_REGION }}
 
       # Exemplo para Terraform (ajuste conforme sua stack)
       - name: Install Terraform
@@ -52,6 +55,7 @@ jobs:
         working-directory: infra
         run: terraform apply -auto-approve
         env:
+          AWS_ROLE_ARN: ${{ secrets.FIAP_POS_AWS_ROLE_ARN }}
           TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
 
       # Seeds SQL (ajuste conforme sua estratégia)
@@ -60,6 +64,7 @@ jobs:
         run: |
           echo "Rodar scripts de seed SQL aqui (exemplo: psql, npm run seed, etc)"
         env:
+          AWS_ROLE_ARN: ${{ secrets.FIAP_POS_AWS_ROLE_ARN }}
           DB_HOST: ${{ secrets.DB_HOST }}
           DB_USER: ${{ secrets.DB_USER }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
