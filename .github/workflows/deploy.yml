@@ -46,6 +46,15 @@ jobs:
         working-directory: infra
         run: terraform init
 
+      - name: Create psycopg2 layer
+        working-directory: infra
+        run: |
+          # Criar layer com psycopg2 para Lambda
+          mkdir -p python/lib/python3.9/site-packages
+          pip install psycopg2-binary -t python/lib/python3.9/site-packages/
+          zip -r psycopg2-layer.zip python/
+          rm -rf python/
+
       - name: Import existing resources (if any)
         working-directory: infra
         continue-on-error: true
