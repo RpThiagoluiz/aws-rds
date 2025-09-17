@@ -46,6 +46,16 @@ jobs:
         working-directory: infra
         run: terraform init
 
+      - name: Import existing resources (if any)
+        working-directory: infra
+        continue-on-error: true
+        run: |
+          # Tentar importar subnet group se já existe
+          terraform import aws_db_subnet_group.postgres_subnet_group postgres-subnet-group || true
+
+          # Tentar importar RDS instance se já existe
+          terraform import aws_db_instance.postgres fiap-customer-db || true
+
       - name: Terraform Plan
         working-directory: infra
         run: terraform plan
