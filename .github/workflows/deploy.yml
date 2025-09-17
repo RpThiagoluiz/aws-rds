@@ -59,6 +59,13 @@ jobs:
           AWS_ROLE_ARN: ${{ secrets.FIAP_POS_AWS_ROLE_ARN }}
           TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
 
+      - name: Get RDS Endpoint
+        id: rds_output
+        working-directory: infra
+        run: |
+          echo "endpoint=$(terraform output -raw rds_endpoint)" >> $GITHUB_OUTPUT
+          echo "database_name=$(terraform output -raw database_name)" >> $GITHUB_OUTPUT
+
       # Seeds SQL (ajuste conforme sua estratégia)
       - name: Run SQL seeds
         if: success()
@@ -67,14 +74,18 @@ jobs:
           # Instalar PostgreSQL client
           sudo apt-get update && sudo apt-get install -y postgresql-client
 
+          # Aguardar RDS estar disponível
+          echo "🕐 Aguardando RDS estar disponível..."
+          sleep 60
+
           # Executar seeds
           ./run-seeds.sh
         env:
           AWS_ROLE_ARN: ${{ secrets.FIAP_POS_AWS_ROLE_ARN }}
-          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_HOST: ${{ steps.rds_output.outputs.endpoint }}
           DB_USER: ${{ secrets.DB_USER }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_NAME: ${{ steps.rds_output.outputs.database_name }}
 
       - name: Done
         run: echo "Deploy e seed finalizados."
