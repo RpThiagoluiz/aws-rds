@@ -86,9 +86,9 @@ jobs:
           # Instalar PostgreSQL client
           sudo apt-get update && sudo apt-get install -y postgresql-client
 
-          # Aguardar RDS estar disponível
+          # Aguardar RDS estar disponível (após modificações pode demorar mais)
           echo "🕐 Aguardando RDS estar disponível..."
-          sleep 60
+          sleep 180
 
           # Executar seeds
           ./run-seeds.sh
